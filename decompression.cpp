@@ -25,7 +25,7 @@ main () {
 	long bitmask;
 	int rle;
 	int decomp_size;
-	int i = 0;
+	//int i = 0;
 
 	vector<uint32_t> dict;
 	vector<uint32_t> decomp;
@@ -54,31 +54,31 @@ main () {
 		cout << *i << "\n";
 
 	comp_inst_len = comp_inst.length();
-	cout << "comp_inst length: " << comp_inst.length() << endl;
-	cout << "location outside while: " << loc << "\n" << endl;
+	//cout << "comp_inst length: " << comp_inst.length() << endl;
+	//cout << "location outside while: " << loc << "\n" << endl;
 	while (loc <= comp_inst_len) {
 		
-		cout << "iteration: " << i << "\n" << endl;
-		i++;
+//		cout << "iteration: " << i << "\n" << endl;
+//		i++;
 		for_cmp = comp_inst.substr(loc, 3);
 		loc = loc + 3;
-		cout << "format instruction: " << for_cmp << endl;
-		cout << "location inside while: " << loc << endl;
+//		cout << "format instruction: " << for_cmp << endl;
+//		cout << "location inside while: " << loc << endl;
 		
 		if (for_cmp.compare("000") == 0) {
-			cout << "inside no compression: " << endl;
+//			cout << "inside no compression: " << endl;
 			//no compression
 			decomp_inst = comp_inst.substr(loc, 32);
 			loc = loc + 32;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst_l = stol(decomp_inst, nullptr, 2);
 			decomp.push_back (decomp_inst_l);
 		} else if (for_cmp.compare("001") == 0) {
-			cout <<"Inside Run Lenght Encoding: " << endl;
+//			cout <<"Inside Run Lenght Encoding: " << endl;
 			//Run Lenght Encoding
 			decomp_inst = comp_inst.substr(loc, 3);
 			loc = loc + 3;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			rle = stoi(decomp_inst);
 			rle = rle + 1; // the rle index starts from 0 so adding 1
 			decomp_size = decomp.size();
@@ -88,57 +88,57 @@ main () {
 				decomp.push_back(decomp_inst_l);
 			}
 		} else if (for_cmp.compare("010") == 0) {
-			cout << "inside Bitmask Based: " << endl;
+//			cout << "inside Bitmask Based: " << endl;
 			//Bitmask Based Compression
 			mismatch_loc_1 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			bitmask = stol(comp_inst.substr(loc, 4), nullptr, 2);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			decomp_inst_l = (dict[dict_ind] |
 					(bitmask << mismatch_loc_1));
 			decomp.push_back(decomp_inst_l);
 		} else if (for_cmp.compare("011") == 0) {
-			cout << "inside 1 Bit Mismatch: " << endl;
+//			cout << "inside 1 Bit Mismatch: " << endl;
 			//1 Bit Mismatch
 			mismatch_loc_1 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			decomp_inst_l = (dict[dict_ind] | 
 					(1 << mismatch_loc_1));
 			decomp.push_back(decomp_inst_l);
 		} else if (for_cmp.compare("100") == 0) {
-			cout << "inside 2 Bit Consecutive Mismatch: " << endl;
+//			cout << "inside 2 Bit Consecutive Mismatch: " << endl;
 			//2 Bit Consecutive Mismatch
 			mismatch_loc_1 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			decomp_inst_l = (dict[dict_ind] |
 					(1 << mismatch_loc_1) |
 					(1 << (mismatch_loc_1 - 1)));
 			decomp.push_back(decomp_inst_l);
 		} else if (for_cmp.compare("101") == 0) {
-			cout << "inside 4 Bit Consecutive compression: " << endl;
+//			cout << "inside 4 Bit Consecutive compression: " << endl;
 			//4 Bit Consecutive Mismatch
 			mismatch_loc_1 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			decomp_inst_l = (dict[dict_ind] | 
 					(1 << mismatch_loc_1) |
@@ -147,28 +147,28 @@ main () {
 					(1 << (mismatch_loc_1 - 3)) );
 			decomp.push_back(decomp_inst_l);
 		} else if (for_cmp.compare("110") == 0) {
-			cout << "inside 2 Bit anywhere: " << endl;
+//			cout << "inside 2 Bit anywhere: " << endl;
 			//2 Bit Anywhere Mismatch
 			mismatch_loc_1 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			mismatch_loc_2 = stoi(comp_inst.substr(loc, 5));
 			loc = loc + 5;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			decomp_inst_l = (dict[dict_ind] | (1 << mismatch_loc_1) | (1 << mismatch_loc_1));
 			decomp.push_back(decomp_inst_l);
 		} else if (for_cmp.compare("111") == 0) {
-			cout << "inside Direct Mapping: " << endl;
+//			cout << "inside Direct Mapping: " << endl;
 			//Direct Matching
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			decomp_inst = comp_inst.substr(loc, 4);
-			cout << "Decompressed Instruction: " << decomp_inst << endl;
+//			cout << "Decompressed Instruction: " << decomp_inst << endl;
 			loc = loc + 4;
-			cout << "Location: " << loc << endl;
+//			cout << "Location: " << loc << endl;
 			dict_ind = stoi(decomp_inst);
 			//decomp_inst_l = stol(dict[dict_ind], nullptr, 2);
 			decomp_inst_l = dict[dict_ind];
