@@ -160,16 +160,25 @@ b2d (string s)
 /*
  * No Decompression 
  */
-void
+int
 no_compression () 
 {
 	string decomp_inst_str;
 	uint32_t decomp_inst;
 
 	decomp_inst_str = get_full_inst();
+	/*
+	 * if extra zero's are padded at the end of
+	 * compressed output than its not required to decode
+	 */
+	if (decomp_inst_str.length() < 32)
+		return -1;
+
 	decomp_inst 	= stol(decomp_inst_str, nullptr, 2);
 
 	decomp.push_back (decomp_inst);
+
+	return 0;
 
 }
 
@@ -188,9 +197,9 @@ rle_decode ()
 	/*
 	 * Getting the last instruction from the decompression vector
 	 */
-	decomp_size = decomp.size();
-	decomp_inst = decomp[decomp_size];
-
+	decomp_size 	= decomp.size();
+	decomp_inst 	= decomp[(decomp_size - 1)];
+	
 	rle_len_str	= get_rle ();
 	rle_len		= b2d (rle_len_str);
 
@@ -230,20 +239,18 @@ bitmask_decode ()
 	bitmask 	= stol (bitmask_str, nullptr, 2);
 	dict_ind 	= stol (dict_ind_str, nullptr, 2);
 	
-	/*assume bitmask  = 00000000 00000000 00000000  00001111
+	/*assume bitmask  = 00000000 00000000 00000000 00001111
 	 * loc = 5
-	 * bitmask << 27  = 11110000 00000000 00000000 00000000
+	 * bitmask << 28  = 11110000 00000000 00000000 00000000
 	 * bitmask >> loc = 00001111 00000000 00000000 00000000
 	 * This left shifting by 27 and than right shifting by loc
 	 * will bring the bitmask to exact location from left
 	 */
 
-	bitmask		= bitmask << 27;
+	bitmask		= bitmask << 28;
 	bitmask		= bitmask >> loc;
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst 	= dict[dict_ind];
 	decomp_inst 	= (decomp_inst) ^ (bitmask);
 	
 	decomp.push_back(decomp_inst);
@@ -271,12 +278,10 @@ one_bit_decode ()
 	dict_ind	= stol (dict_ind_str, nullptr, 2);
 
 	mismatch 	= 1;
-	mismatch	= mismatch << 30;
+	mismatch	= mismatch << 31;
 	mismatch	= mismatch >> loc;
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst 	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst 	= dict[dict_ind];
 	decomp_inst 	= decomp_inst ^ mismatch;
 
 	decomp.push_back(decomp_inst);
@@ -304,12 +309,10 @@ two_bit_consecutive_decode ()
 	dict_ind	= stol (dict_ind_str, nullptr, 2);
 	
 	mismatch 	= 11;
-	mismatch	= mismatch << 29;
+	mismatch	= mismatch << 30;
 	mismatch	= mismatch >> loc;
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst 	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst 	= dict[dict_ind];
 	decomp_inst 	= decomp_inst ^ mismatch;
 
 	decomp.push_back(decomp_inst);
@@ -337,12 +340,10 @@ four_bit_consecutive_decode ()
 	dict_ind	= stol (dict_ind_str, nullptr, 2);
 	
 	mismatch 	= 1111;
-	mismatch	= mismatch << 27;
+	mismatch	= mismatch << 28;
 	mismatch	= mismatch >> loc;
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst 	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst 	= dict[dict_ind];
 	decomp_inst 	= decomp_inst ^ mismatch;
 
 	decomp.push_back(decomp_inst);
@@ -375,15 +376,13 @@ two_bit_anywhere_decode ()
 	dict_ind	= stol (dict_ind_str, nullptr, 2);
 	
 	mismatch_1 	= 1;
-	mismatch_1	= mismatch_1 << 30;
+	mismatch_1	= mismatch_1 << 31;
 	mismatch_1	= mismatch_1 >> loc_1;
 	mismatch_2 	= 1;
-	mismatch_2	= mismatch_2 << 30;
+	mismatch_2	= mismatch_2 << 31;
 	mismatch_2	= mismatch_2 >> loc_2;
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst 	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst 	= dict[dict_ind];
 	decomp_inst 	= decomp_inst ^ mismatch_1;
 	decomp_inst 	= decomp_inst ^ mismatch_2;
 
@@ -406,9 +405,8 @@ direct_mapping_decode ()
 	dict_ind_str 	= get_dict_ind ();
 	dict_ind	= stol (dict_ind_str, nullptr, 2);
 
-	decomp_inst_str = dict[dict_ind];
-	decomp_inst 	= stol (decomp_inst_str, nullptr, 2);
-
+	decomp_inst	= dict[dict_ind];
+	
 	decomp.push_back(decomp_inst);
 
 }
@@ -419,16 +417,29 @@ direct_mapping_decode ()
 void
 decode () 
 {
-	int comp_inst_len = 0;
 	string type;
+	int comp_inst_len = 0;
+	int no_comp;
 
-	type = get_type();
 	comp_inst_len = comp_inst.length();
-	
+
 	while (cp_comp_inst < comp_inst_len) {
 	
+		type = get_type();
+		/*
+		 * if extra zero's are padded at 
+		 * the end of compressed output
+		 * but are less than 3
+		 */
+		if (type.length() < 3) {
+			break;
+		}
+
 		if (type.compare("000") == 0) {
-			no_compression();
+			no_comp = no_compression();
+			if (no_comp == -1) {
+				break;
+			}
 		} else if (type.compare("001") == 0) {
 			rle_decode();	
 		} else if (type.compare("010") == 0) {
@@ -444,6 +455,7 @@ decode ()
 		} else if (type.compare("111") == 0) {
 			direct_mapping_decode();
 		}	
+		
 	}	
 }
 
@@ -506,16 +518,17 @@ main ()
 		bitset<32> bits(elem);
 		cout << bits << endl;
 	}
-	
 #endif
 
 	decode();
 
+#if 0
 	cout << "Decompressed text: " << endl;
 	for (auto &elem : decomp) {
 		bitset<32> bits(elem);
 		cout << bits << endl;
 	}
+#endif
 
 	return 0;
 
