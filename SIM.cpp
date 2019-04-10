@@ -1,3 +1,5 @@
+/* On my honor, I have neihter given nor received unauthorized aid on this assignment */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,14 +14,14 @@
 #include <bits/stdc++.h> 
 using namespace std;
 
-#define INST_BITS 32
-#define DICT_SIZE 16
-#define RLE_MAX   8
-#define TYPE_SZ   3
-#define RLE_SZ   3
-#define MASK_SZ   4
-#define INDEX_SZ  4
-#define LOC_SZ    5
+#define INST_BITS 	32		// Instructions are 32 bits long
+#define DICT_SIZE 	16		// Dictionary size is 16
+#define RLE_MAX   	8		// Max number of instruction allowed to encode using RLE scheme is 8
+#define TYPE_SZ   	3		// The 8 encoding schemes can be represented using 3 bits 
+#define RLE_SZ   	3		// This 3 bits represent the number of instructions encoded using RLE scheme (MAx: 8)
+#define MASK_SZ   	4		// The size of the bitmask used in bitmask based encoding scheme is 4 bits
+#define INDEX_SZ  	4		// This represents the dicitionary instruction at each dictionary index using 4 bits 
+#define LOC_SZ    	5		// A location in the 32 bit instruction can be represented using 5 bits
 
 /***********************************
  *        Global storage           *
@@ -52,8 +54,8 @@ string compressed_inst_str;
  */
 class FreqData {
   public:
-    int count; //num of occurences
-    int seq;   //insertion order
+    int count;	//num of occurences
+    int seq;	//insertion order
 
     FreqData (int count1, int seq1) {
       count = count1;
@@ -63,6 +65,7 @@ class FreqData {
     ~FreqData() {
     }
 };
+
 
 /**********************************************
  * Functions related to instruction dictonary *
@@ -115,7 +118,7 @@ print_dict ()
  *  @input inst the 32 bit instruction
  *  @input index the index to be filled
  *
- *  @return bool true - if inst present in dict
+ *  @return bool true  - if inst present in dict
  *               false - otherwise
  */
 bool
@@ -196,16 +199,6 @@ parse_input_for_compression (const char *input_file)
      */
     for (char &c : line) {
 
-#if 0
-      /*
-       * TODO: an individual bits can only be 0 or 1
-       */
-      if (c != '0' || c != '1') {
-        cout << "Error: unexpected bit found";
-        myfile.close();
-        return -1;
-      }
-#endif 
       if (c == '1') {
         inst |= 1 << i;
       }
@@ -240,7 +233,7 @@ parse_input_for_compression (const char *input_file)
    * sort the freq map
    * the inst which appeared most num of times is kept at 0th index
    * if there is a tie, the inst whuch came first, is kept at lower index
-   * We will only keep the first 16 inst as dictory size is 16
+   * We will only keep the first 16 inst as dictionary size is 16
    */
   typedef function <bool (pair <uint32_t, FreqData>, pair <uint32_t, FreqData>)> comparator;
 
@@ -394,15 +387,16 @@ get_full_inst (size_t *cp)
 
   inst = compressed_inst_str.substr(*cp, len);
   *cp += len;
+  
   return inst;
 }
 
 /*
- * Get the location fromm the current pointer in compressed inst string
+ * Get the location from the current pointer in compressed inst string
  * Example:
  *
- * compressed inst string: "010 100000 1101 0000"
- * return = "100000"
+ * compressed inst string: "010 10000 1101 0000"
+ * return = "10000"
  *
  */
 string
@@ -413,6 +407,7 @@ get_location (size_t *cp)
 
   loc = compressed_inst_str.substr(*cp, len);
   *cp += len;
+  
   return loc;
 }
 
@@ -429,6 +424,7 @@ get_mask (size_t *cp)
 
   mask = compressed_inst_str.substr(*cp, len);
   *cp += len;
+  
   return mask;
 }
 
@@ -445,6 +441,7 @@ get_index (size_t *cp)
 
   index = compressed_inst_str.substr(*cp, len);
   *cp += len;
+  
   return index;
 }
 
@@ -454,16 +451,15 @@ get_index (size_t *cp)
 void
 decode ()
 {
-  size_t cp;
-  uint32_t length = 0;
-  uint32_t inst = 0;
-  uint32_t prev_inst = 0;
+  size_t cp 		= 0;
+  uint32_t length 	= 0;
+  uint32_t inst 	= 0;
+  uint32_t prev_inst 	= 0;
 
   length = compressed_inst_str.length();
 
   while (cp < length) {
     
-  
     /*
      * get the type of encoding
      */
@@ -477,7 +473,7 @@ decode ()
      * no encoding
      */
     if (type.compare("000") == 0) {
-
+	
       /*
        * get the full instruction
        */
@@ -563,6 +559,10 @@ decode ()
        */
       string loc_str = get_location(&cp);
       int loc = stoi(loc_str, nullptr, 2);
+     
+     /*
+      * create the 1 bit mask
+      */ 
       uint32_t mask = 1 << 31;
       mask = mask >> loc;
       
@@ -596,14 +596,18 @@ decode ()
        */
       string loc_str = get_location(&cp);
       int loc = stoi(loc_str, nullptr, 2);
-      uint32_t mask = 0x0F << 30; //11000000 00000000 00000000 00000000
-      mask = mask >> loc;
       
       /*
        * get the index
        */
       string index_str = get_index(&cp);
       int index = stoi(index_str, nullptr, 2);
+      
+      /*
+       * create the mask for 2 bit consecutive mismatch
+       */
+      uint32_t mask = 0x03 << 30; //11000000 00000000 00000000 00000000
+      mask = mask >> loc;
       
       /*
        * get the Dictonary instruction
@@ -625,18 +629,22 @@ decode ()
       
       /*
        * get the location
-       * Here the mask is 2-bit
+       * Here the mask is 4-bit
        */
       string loc_str = get_location(&cp);
       int loc = stoi(loc_str, nullptr, 2);
-      uint32_t mask = 0x0F << 28; //11110000 00000000 00000000 00000000
-      mask = mask >> loc;
       
       /*
        * get the index
        */
       string index_str = get_index(&cp);
       int index = stoi(index_str, nullptr, 2);
+      
+      /*
+       * create the mask for 4 bit consecutive mismatch
+       */
+      uint32_t mask = 0x0F << 28; //11110000 00000000 00000000 00000000
+      mask = mask >> loc;
       
       /*
        * get the Dictonary instruction
@@ -725,9 +733,9 @@ decode ()
    */
   ofstream dout_file;
   dout_file.open ("dout.txt", ios::trunc);
-  for (auto i : inst_vec) {
+  for (auto &elem : inst_vec) {
     
-    bitset<32> bits(i);
+    bitset<32> bits(elem);
     dout_file << bits;
     dout_file << "\n";
   }
@@ -844,7 +852,7 @@ is_one_bit_mismmatch (uint32_t a, uint32_t b, uint32_t *loc)
  * @ip b second instruction
  * @ip loc location of the first mismatch bit from MSB
  *
- * @return: true - if there is a two bit consecutive mismatch
+ * @return: true  - if there is a two bit consecutive mismatch
  *          false - otherwise
  */
 static bool
@@ -870,12 +878,12 @@ is_two_bit_consecutive_mismatch (uint32_t a, uint32_t b, uint32_t *loc)
 }
 
 /*
- * check if two instruction differ at 2 consecutive locations
+ * check if two instruction differ at 4 consecutive locations
  * @ip a first instruction
  * @ip b second instruction
  * @ip loc location of the first mismatch bit fromm MSB
  *
- * @return: true - if there is a four bit consecutive mismatch
+ * @return: true  - if there is a four bit consecutive mismatch
  *          false - otherwise
  */
 static bool
@@ -934,7 +942,7 @@ is_two_bit_anywhere_mismatch (uint32_t a, uint32_t b,
  * @ip loc location
  * @ip mask bitmask to be applied
  *
- * @return true - if the inst can be encoded using bitmask encode
+ * @return true  - if the inst can be encoded using bitmask encode
  *         false - otherwise
  */
 static bool
@@ -1007,9 +1015,9 @@ run_length_encode (int n)
 string
 bitmask_encode (uint32_t inst, bool *encoded)
 {
-  int index = 0;
-  uint32_t loc = 0;
-  bool found = false;
+  int index 	= 0;
+  uint32_t loc 	= 0;
+  bool found 	= false;
   uint32_t mask = 0;
   bitset<16> encoded_inst;
 
@@ -1030,22 +1038,22 @@ bitmask_encode (uint32_t inst, bool *encoded)
     bitset<5> loc_bits(loc);
     bitset<4> mask_bits(mask);
 
-    encoded_inst[15] = 0;
-    encoded_inst[14] = 1;
-    encoded_inst[13] = 0;
-    encoded_inst[12] = loc_bits[4];
-    encoded_inst[11] = loc_bits[3];
-    encoded_inst[10] = loc_bits[2];
-    encoded_inst[9] = loc_bits[1];
-    encoded_inst[8] = loc_bits[0];
-    encoded_inst[7] = mask_bits[3];
-    encoded_inst[6] = mask_bits[2];
-    encoded_inst[5] = mask_bits[1];
-    encoded_inst[4] = mask_bits[0];
-    encoded_inst[3] = index_bits[3];
-    encoded_inst[2] = index_bits[2];
-    encoded_inst[1] = index_bits[1];
-    encoded_inst[0] = index_bits[0];
+    encoded_inst[15] 	= 0;
+    encoded_inst[14] 	= 1;
+    encoded_inst[13] 	= 0;
+    encoded_inst[12] 	= loc_bits[4];
+    encoded_inst[11] 	= loc_bits[3];
+    encoded_inst[10] 	= loc_bits[2];
+    encoded_inst[9] 	= loc_bits[1];
+    encoded_inst[8] 	= loc_bits[0];
+    encoded_inst[7] 	= mask_bits[3];
+    encoded_inst[6] 	= mask_bits[2];
+    encoded_inst[5] 	= mask_bits[1];
+    encoded_inst[4] 	= mask_bits[0];
+    encoded_inst[3] 	= index_bits[3];
+    encoded_inst[2] 	= index_bits[2];
+    encoded_inst[1] 	= index_bits[1];
+    encoded_inst[0] 	= index_bits[0];
     
     *encoded = true;
   }
@@ -1067,9 +1075,9 @@ bitmask_encode (uint32_t inst, bool *encoded)
 string
 one_bit_mismatch_encode (uint32_t inst, bool *encoded)
 {
-  int index = 0;      //dict index
-  uint32_t loc = 0;   //location of first mismatch bit
-  bool found = false;
+  int index 	= 0;      //dict index
+  uint32_t loc 	= 0;   //location of first mismatch bit
+  bool found 	= false;
   bitset<12> encoded_inst;
 
   assert(encoded);
@@ -1090,16 +1098,16 @@ one_bit_mismatch_encode (uint32_t inst, bool *encoded)
     bitset<5> loc_bits(loc - 1);
     encoded_inst[11] = 0;
     encoded_inst[10] = 1;
-    encoded_inst[9] = 1;
-    encoded_inst[8] = loc_bits[4];
-    encoded_inst[7] = loc_bits[3];
-    encoded_inst[6] = loc_bits[2];
-    encoded_inst[5] = loc_bits[1];
-    encoded_inst[4] = loc_bits[0];
-    encoded_inst[3] = index_bits[3];
-    encoded_inst[2] = index_bits[2];
-    encoded_inst[1] = index_bits[1];
-    encoded_inst[0] = index_bits[0];
+    encoded_inst[9]  = 1;
+    encoded_inst[8]  = loc_bits[4];
+    encoded_inst[7]  = loc_bits[3];
+    encoded_inst[6]  = loc_bits[2];
+    encoded_inst[5]  = loc_bits[1];
+    encoded_inst[4]  = loc_bits[0];
+    encoded_inst[3]  = index_bits[3];
+    encoded_inst[2]  = index_bits[2];
+    encoded_inst[1]  = index_bits[1];
+    encoded_inst[0]  = index_bits[0];
     
     *encoded = true;
   }
@@ -1122,9 +1130,9 @@ string
 two_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
 {
   bitset<12> encoded_inst;
-  int index = 0;
-  uint32_t loc = 0;
-  bool found = false;
+  int index 	= 0;
+  uint32_t loc 	= 0;
+  bool found 	= false;
 
   assert(encoded);
 
@@ -1144,16 +1152,16 @@ two_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
     bitset<5> loc_bits(loc - 1);
     encoded_inst[11] = 1;
     encoded_inst[10] = 0;
-    encoded_inst[9] = 0;
-    encoded_inst[8] = loc_bits[4];
-    encoded_inst[7] = loc_bits[3];
-    encoded_inst[6] = loc_bits[2];
-    encoded_inst[5] = loc_bits[1];
-    encoded_inst[4] = loc_bits[0];
-    encoded_inst[3] = index_bits[3];
-    encoded_inst[2] = index_bits[2];
-    encoded_inst[1] = index_bits[1];
-    encoded_inst[0] = index_bits[0];
+    encoded_inst[9]  = 0;
+    encoded_inst[8]  = loc_bits[4];
+    encoded_inst[7]  = loc_bits[3];
+    encoded_inst[6]  = loc_bits[2];
+    encoded_inst[5]  = loc_bits[1];
+    encoded_inst[4]  = loc_bits[0];
+    encoded_inst[3]  = index_bits[3];
+    encoded_inst[2]  = index_bits[2];
+    encoded_inst[1]  = index_bits[1];
+    encoded_inst[0]  = index_bits[0];
     
     *encoded = true;
   }
@@ -1176,9 +1184,9 @@ string
 four_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
 {
   bitset<12> encoded_inst;
-  int index = 0;
-  uint32_t loc = 0;
-  bool found = false;
+  int index 	= 0;
+  uint32_t loc 	= 0;
+  bool found 	= false;
 
   assert(encoded);
 
@@ -1198,16 +1206,16 @@ four_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
     bitset<5> loc_bits(loc - 1);
     encoded_inst[11] = 1;
     encoded_inst[10] = 0;
-    encoded_inst[9] = 1;
-    encoded_inst[8] = loc_bits[4];
-    encoded_inst[7] = loc_bits[3];
-    encoded_inst[6] = loc_bits[2];
-    encoded_inst[5] = loc_bits[1];
-    encoded_inst[4] = loc_bits[0];
-    encoded_inst[3] = index_bits[3];
-    encoded_inst[2] = index_bits[2];
-    encoded_inst[1] = index_bits[1];
-    encoded_inst[0] = index_bits[0];
+    encoded_inst[9]  = 1;
+    encoded_inst[8]  = loc_bits[4];
+    encoded_inst[7]  = loc_bits[3];
+    encoded_inst[6]  = loc_bits[2];
+    encoded_inst[5]  = loc_bits[1];
+    encoded_inst[4]  = loc_bits[0];
+    encoded_inst[3]  = index_bits[3];
+    encoded_inst[2]  = index_bits[2];
+    encoded_inst[1]  = index_bits[1];
+    encoded_inst[0]  = index_bits[0];
     
     *encoded = true;
   }
@@ -1229,10 +1237,11 @@ four_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
 string
 two_bit_anywhere_mismatch_encode (uint32_t inst, bool *encoded)
 {
-  int index = 0;
   bitset<17> encoded_inst;
-  uint32_t loc1 = 0, loc2 = 0;
-  bool found = false;
+  int index 	= 0;
+  uint32_t loc1 = 0;
+  uint32_t loc2 = 0;
+  bool found 	= false;
 
   assert(encoded);
   
@@ -1259,16 +1268,16 @@ two_bit_anywhere_mismatch_encode (uint32_t inst, bool *encoded)
     encoded_inst[12] = loc1_bits[3];
     encoded_inst[11] = loc1_bits[2];
     encoded_inst[10] = loc1_bits[1];
-    encoded_inst[9] = loc1_bits[0];
-    encoded_inst[8] = loc2_bits[4];
-    encoded_inst[7] = loc2_bits[3];
-    encoded_inst[6] = loc2_bits[2];
-    encoded_inst[5] = loc2_bits[1];
-    encoded_inst[4] = loc2_bits[0];
-    encoded_inst[3] = index_bits[3];
-    encoded_inst[2] = index_bits[2];
-    encoded_inst[1] = index_bits[1];
-    encoded_inst[0] = index_bits[0];
+    encoded_inst[9]  = loc1_bits[0];
+    encoded_inst[8]  = loc2_bits[4];
+    encoded_inst[7]  = loc2_bits[3];
+    encoded_inst[6]  = loc2_bits[2];
+    encoded_inst[5]  = loc2_bits[1];
+    encoded_inst[4]  = loc2_bits[0];
+    encoded_inst[3]  = index_bits[3];
+    encoded_inst[2]  = index_bits[2];
+    encoded_inst[1]  = index_bits[1];
+    encoded_inst[0]  = index_bits[0];
 
     *encoded = true;
   }
@@ -1332,7 +1341,7 @@ encode_inst (uint32_t inst)
   bool encoded = false;
 
   /*
-   * trye direct encoding
+   * try direct encoding
    */
   encoded_inst = direct_encode(inst, &encoded);
   if (encoded) {
@@ -1380,7 +1389,7 @@ encode_inst (uint32_t inst)
   }
 
   /*
-   * none of the schemes worked, return ful instruction
+   * none of the schemes worked, return full instruction
    */
   bitset<32> bits(inst);
   encoded_inst = string(3, '0').append(bits.to_string());
@@ -1394,11 +1403,11 @@ encode_inst (uint32_t inst)
 void
 encode ()
 {
-  long long prev_inst = -1;
-  int i = 0;
-  int len = 0;
-  int repeat_n = 0;
-  bool reset = false;
+  long long prev_inst 	= -1;
+  int i 		= 0;
+  int len 		= 0;
+  int repeat_n 		= 0;
+  bool reset 		= false;
   string encoded_inst;
 
   len = inst_vec.size();
@@ -1524,7 +1533,7 @@ main (int argc, char* argv[])
      */
     encode();
   } else if (option.compare("2") == 0) {
-    
+   
     /*
      * parse the compressed output
      * and create dict and compressed string
