@@ -1095,7 +1095,7 @@ one_bit_mismatch_encode (uint32_t inst, bool *encoded)
   if (found) {
     
     bitset<4> index_bits(index);
-    bitset<5> loc_bits(loc - 1);
+    bitset<5> loc_bits(loc);
     encoded_inst[11] = 0;
     encoded_inst[10] = 1;
     encoded_inst[9]  = 1;
@@ -1149,7 +1149,7 @@ two_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
   if (found) {
     
     bitset<4> index_bits(index);
-    bitset<5> loc_bits(loc - 1);
+    bitset<5> loc_bits(loc);
     encoded_inst[11] = 1;
     encoded_inst[10] = 0;
     encoded_inst[9]  = 0;
@@ -1203,7 +1203,7 @@ four_bit_consecutive_mismatch_encode (uint32_t inst, bool *encoded)
   if (found) {
     
     bitset<4> index_bits(index);
-    bitset<5> loc_bits(loc - 1);
+    bitset<5> loc_bits(loc);
     encoded_inst[11] = 1;
     encoded_inst[10] = 0;
     encoded_inst[9]  = 1;
