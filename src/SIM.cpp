@@ -470,6 +470,18 @@ decode ()
     }
     
     /*
+     * checking if the first instruction to be 
+     * decoded has a RLE format or not
+     * Since, RLE requires atleast 1 instruction before it,
+     * the first instruction cannot be RLE
+     */
+    
+    if (cp == 3 && type == "001") {
+      cout << "First instruction to be decoded cannot have a RLE format" << endl;
+      break;
+    }
+
+    /*
      * no encoding
      */
     if (type.compare("000") == 0) {
